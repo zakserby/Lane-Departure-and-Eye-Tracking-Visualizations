@@ -1,0 +1,102 @@
+---
+title: "Sta- 230-03 Project (F23)"
+author: "Zachary Serby"
+output: pdf_document
+---
+
+
+
+```{r}
+
+## Load packages
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+```
+
+
+
+### Visualization 1
+
+
+
+```{r}
+
+drives <- read.csv("https://remiller1450.github.io/data/drives.csv") ## Load data set
+   
+
+drives_NA <- na.omit(drives) %>% ## Remove observations with missing values
+  group_by(Subject, Drive) %>% 
+  mutate(Total_Departures = LaneDeparts_Left +
+           LaneDeparts_Right) %>% ## Add column combining left and right departures
+  summarize(total = sum(Total_Departures))
+
+```
+
+
+
+```{r}
+
+ggplot(drives_NA, aes(x = total, color = Drive, 
+                      fill = Drive)) + ## Create the histogram
+  geom_histogram(bins = 10, alpha = .5, 
+                 position = "identity") +   
+  facet_wrap(~ Drive) + ## Divide into four sub graphs to show each four drives 
+  labs(
+       x = "Total Number of Departures",
+       y = "Frequency") + ## Label graph
+  
+  scale_fill_manual(values = c("RT1" = "red", "RT2" = "lightgreen", 
+                               "RT3" = "cyan", "RT4" = "orange")) +
+  scale_color_manual(values = c("RT1" = "red", "RT2" = "lightgreen", 
+                                "RT3" = "cyan", "RT4" = "orange")) +
+  theme_minimal()
+
+```
+
+
+
+### Visualization 2
+
+
+
+```{r}
+
+target <- read.csv("https://collinn.github.io/teaching/2023/data/target.csv")
+cohort <- read.csv("https://collinn.github.io/teaching/2023/data/cohort.csv") 
+## Load data set
+
+target_join <- left_join(x = target, y = cohort, by = c("subjectID", "time")) ## Merge 
+## data sets "target" and "cohort"
+target_longer<- pivot_longer(target_join, 
+             cols = !subjectID & !time, 
+             names_to = "Target", 
+             values_to = "Proportion") ## Rearrange data to combine 
+## experimental conditions and generate a column 
+## for the proportion of looks the subject looked at 
+## "Target" and "Cohort" images
+target_separate <- separate(target_longer, 
+                       col = Target, 
+                       into = c("Noise", "Method"),
+                       sep = "[.]") ## Separate column into experimental condition 
+## and type of image
+
+```
+
+
+
+```{r}
+
+ggplot(target_separate, aes(x = time, y = Proportion)) + ## Create line graph
+  geom_line(aes(color = factor(subjectID))) +
+  geom_smooth(method = "loess", color = "black") +
+  facet_grid(Noise ~ Method) + ## Two categorical variables are present 
+## therefore this function is required to display 
+## 6 sub graphs
+  labs(x = "Time", y = "Proportion") +
+  theme_bw() +
+  theme(legend.position = "none") 
+
+```
+
